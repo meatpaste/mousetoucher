@@ -140,6 +140,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func synthesizeClick(at location: CGPoint, isRightClick: Bool) {
+        // Security: Validate coordinates are within screen bounds to prevent malicious clicks
+        guard NSScreen.screens.contains(where: { $0.frame.contains(location) }) else {
+            return
+        }
+
         if isRightClick {
             if let mouseDown = CGEvent(mouseEventSource: nil, mouseType: .rightMouseDown, mouseCursorPosition: location, mouseButton: .right) {
                 mouseDown.post(tap: .cghidEventTap)

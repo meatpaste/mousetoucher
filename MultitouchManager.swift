@@ -58,6 +58,9 @@ class MultitouchManager {
     func processTouches(_ touches: UnsafeMutablePointer<MTTouch>, numTouches: Int, timestamp: Double) {
         guard isEnabled else { return }
 
+        // Security: Validate input to prevent buffer overflows and invalid touch counts
+        guard numTouches >= 0 && numTouches <= 10 else { return }
+
         if numTouches == 0 {
             if activeTouch != -1 {
                 // Get cursor position directly from CGEvent (already in correct coordinate space)
@@ -121,6 +124,11 @@ class MultitouchManager {
 
     deinit {
         stop()
+        // Security: Properly release device references to prevent resource leaks
+        for device in devices {
+            MTDeviceRelease(device)
+        }
+        devices.removeAll()
     }
 }
 
