@@ -6,6 +6,9 @@
 .DS_Store
 ._*
 
+# Release artifacts (attached to GitHub releases, not committed)
+dist/
+
 # Logs
 *.log
 
