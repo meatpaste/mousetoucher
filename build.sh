@@ -29,6 +29,7 @@ swiftc -o "$BUILD_DIR/${APP_NAME}_arm64" \
     -F /System/Library/PrivateFrameworks \
     -framework MultitouchSupport \
     -Xlinker -rpath -Xlinker /System/Library/PrivateFrameworks \
+    Preferences.swift \
     TapDetector.swift \
     MultitouchManager.swift \
     AppDelegate.swift \
@@ -49,6 +50,7 @@ swiftc -o "$BUILD_DIR/${APP_NAME}_x86_64" \
     -F /System/Library/PrivateFrameworks \
     -framework MultitouchSupport \
     -Xlinker -rpath -Xlinker /System/Library/PrivateFrameworks \
+    Preferences.swift \
     TapDetector.swift \
     MultitouchManager.swift \
     AppDelegate.swift \

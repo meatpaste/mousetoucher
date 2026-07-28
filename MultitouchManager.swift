@@ -10,8 +10,14 @@ class MultitouchManager {
     private var activeTouch: Int32 = -1
     private var touchStartX: Float = 0.0
     private var touchStartY: Float = 0.0
-    private var rightClickThreshold: Float = 0.6  // X > 0.6 = right side
     private var surfaceMovementThreshold: Float = 0.15  // Max finger movement on surface (0-1 scale)
+
+    /// Taps with a normalized x above this are right clicks. Configurable from the menu bar.
+    var rightClickThreshold: Float = Preferences.rightClickThreshold {
+        didSet {
+            rightClickThreshold = Preferences.clamp(rightClickThreshold)
+        }
+    }
 
     fileprivate static var sharedInstance: MultitouchManager?
 
@@ -57,6 +63,9 @@ class MultitouchManager {
 
     func processTouches(_ touches: UnsafeMutablePointer<MTTouch>, numTouches: Int, timestamp: Double) {
         guard isEnabled else { return }
+
+        // The callback comes from a private framework; don't trust a negative count.
+        guard numTouches >= 0 else { return }
 
         if numTouches == 0 {
             if activeTouch != -1 {

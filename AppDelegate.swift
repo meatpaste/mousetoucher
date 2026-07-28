@@ -52,6 +52,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(enabledItem)
 
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(buildRightClickZoneItem())
+
+        menu.addItem(NSMenuItem.separator())
         let accessibilityItem = NSMenuItem(title: "Accessibility Instructions…", action: #selector(showAccessibilityInstructions), keyEquivalent: "")
         accessibilityItem.target = self
         menu.addItem(accessibilityItem)
@@ -74,7 +77,50 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         multitouchManager?.setEnabled(isEnabled)
     }
 
+    /// Submenu letting the user pick where the left/right click boundary sits on the mouse surface.
+    private func buildRightClickZoneItem() -> NSMenuItem {
+        let parentItem = NSMenuItem(title: "Right Click Zone", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+
+        var choices = Preferences.rightClickThresholdChoices
+        let current = Preferences.rightClickThreshold
+        // Surface a value set outside the app (e.g. via `defaults write`) so it's still selectable.
+        if !choices.contains(current) {
+            choices.append(current)
+            choices.sort()
+        }
+
+        for choice in choices {
+            let percent = Int((choice * 100).rounded())
+            let item = NSMenuItem(
+                title: "Right side starts at \(percent)%",
+                action: #selector(selectRightClickThreshold(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = choice
+            item.state = choice == current ? .on : .off
+            submenu.addItem(item)
+        }
+
+        parentItem.submenu = submenu
+        return parentItem
+    }
+
+    @objc func selectRightClickThreshold(_ sender: NSMenuItem) {
+        guard let threshold = sender.representedObject as? Float else { return }
+
+        Preferences.rightClickThreshold = threshold
+        multitouchManager?.rightClickThreshold = Preferences.rightClickThreshold
+
+        guard let submenu = sender.menu else { return }
+        for item in submenu.items {
+            item.state = (item.representedObject as? Float) == Preferences.rightClickThreshold ? .on : .off
+        }
+    }
+
     @objc func showAbout() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         let alert = NSAlert()
         alert.messageText = "Mouse Toucher"
         alert.informativeText = """
@@ -83,7 +129,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         • Tap left side for left click
         • Tap right side for right click
 
-        Version 1.0
+        Version \(version)
 
         Uses private MultitouchSupport framework
         """
@@ -139,7 +185,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// True if the point falls on an active display. Coordinates here are in Quartz global
+    /// space (origin top-left), which is what `CGEvent.location` reports — so this must not be
+    /// compared against `NSScreen.frame`, which uses Cocoa's bottom-left origin.
+    private func isOnActiveDisplay(_ location: CGPoint) -> Bool {
+        guard location.x.isFinite, location.y.isFinite else { return false }
+
+        var matchingDisplayCount: UInt32 = 0
+        // Fail open: if the query itself fails, don't silently swallow the click.
+        guard CGGetDisplaysWithPoint(location, 0, nil, &matchingDisplayCount) == .success else {
+            return true
+        }
+        return matchingDisplayCount > 0
+    }
+
     func synthesizeClick(at location: CGPoint, isRightClick: Bool) {
+        guard isOnActiveDisplay(location) else { return }
+
         if isRightClick {
             if let mouseDown = CGEvent(mouseEventSource: nil, mouseType: .rightMouseDown, mouseCursorPosition: location, mouseButton: .right) {
                 mouseDown.post(tap: .cghidEventTap)

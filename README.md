@@ -73,6 +73,7 @@ That's it! You'll see a mouse icon in your menu bar.
 Click the mouse icon in your menu bar to:
 
 - **Enable/Disable** tap-to-click (checkmark shows when enabled)
+- **Right Click Zone** – choose where the right-click half of the mouse begins (40%–90% across the surface; default 60%). The choice is remembered between launches.
 - **View About** information
 - **Quit** the app
 
@@ -139,6 +140,17 @@ These permissions are granted by you in System Settings and can be revoked at an
 - This is normal for apps not from the App Store
 - Right-click MouseToucher → **Open** → Click **Open** again in the dialog
 - Or: Go to **System Settings → Privacy & Security** and click **Open Anyway**
+
+### Adjusting the left/right click boundary
+
+Use **Right Click Zone** in the menu bar. If you want a value that isn't offered there, set it
+directly and it will show up in the menu:
+
+```bash
+defaults write com.mousetoucher.app rightClickThreshold 0.75
+```
+
+Values are clamped to 0.1–0.95. Restart the app after using `defaults write`.
 
 ### Adjusting sensitivity
 
